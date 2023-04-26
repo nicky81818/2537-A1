@@ -34,7 +34,7 @@ app.use(express.static('public'));
 
 
 var mongoStore = MongoStore.create({
-	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/sessions`,
+	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}}`,
     crypto: {
 		secret: mongodb_session_secret
 	}
@@ -89,20 +89,22 @@ app.post('/signupSubmit', async (req,res) => {
     var name = req.body.name;
     var email = req.body.email;
     var password = req.body.password;
+    console.log(name, email, password)
 
     const schema = Joi.object(
         {
             name: Joi.string().alphanum().max(25).required(),
             email: Joi.string().max(25).required(),
 			password: Joi.string().max(20).required()
-		});
+		}
+    );
         
-        const validationResult = schema.validate({username, password});
-        if (validationResult.error != null) {
-            console.log(validationResult.error);
-            res.redirect("/signup");
-            return;
-        }
+    const validationResult = schema.validate({name, email, password});
+    if (validationResult.error != null) {
+        console.log(validationResult.error);
+        res.redirect("/signup");
+        return;
+    }
 
     var hashedPassword = await bcrypt.hashSync(password, saltRounds);
 
@@ -157,8 +159,8 @@ app.post('/loginSubmit', async (req,res) => {
     var user_email = req.body.email;
     var user_password = req.body.password;
 
-    const schema = Joi.string().max(20).required();
-	const validationResult = schema.validate(username);
+    const schema = Joi.string().max(25).required();
+	const validationResult = schema.validate(user_email);
 	if (validationResult.error != null) {
 	   console.log(validationResult.error);
 	   res.redirect("/login");
