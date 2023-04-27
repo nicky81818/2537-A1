@@ -4,11 +4,10 @@ const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo')
-const usersModel = require('./models/user.js');
 const saltRounds = 10;
 const app = express();
 const port = process.env.port || 3000;
-
+console.log(port)
 // var numPageHits = 0;
 const expireTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 // var users = [];
@@ -34,7 +33,7 @@ app.use(express.static('public'));
 
 
 var mongoStore = MongoStore.create({
-	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}}`,
+	mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@${mongodb_host}/${mongodb_database}`,
     crypto: {
 		secret: mongodb_session_secret
 	}
@@ -58,7 +57,7 @@ app.get('/', (req, res) => {
         <button onclick="window.location.href='/login'">Login</button>`);
     }
     else {
-        res.send(`Hello ${req.session.name}!
+        res.send(`Hello ${req.session.username}!
         <br>
         <button onclick="window.location.href='/members'">Go to Members Area</button>
         <button onclick="window.location.href='/logout'">Logout</button>`);
@@ -86,37 +85,36 @@ app.get('/signup', (req,res) => {
 });
 
 app.post('/signupSubmit', async (req,res) => {
-    var name = req.body.name;
-    var email = req.body.email;
-    var password = req.body.password;
-    console.log(name, email, password)
+    var user_name = req.body.name;
+    var user_email = req.body.email;
+    var user_password = req.body.password;
 
     const schema = Joi.object(
         {
-            name: Joi.string().alphanum().max(25).required(),
-            email: Joi.string().max(25).required(),
-			password: Joi.string().max(20).required()
+            user_name: Joi.string().alphanum().max(25).required(),
+            user_email: Joi.string().max(25).required(),
+			user_password: Joi.string().max(20).required()
 		}
     );
         
-    const validationResult = schema.validate({name, email, password});
+    const validationResult = schema.validate({user_name, user_email, user_password});
     if (validationResult.error != null) {
         console.log(validationResult.error);
         res.redirect("/signup");
         return;
     }
 
-    var hashedPassword = await bcrypt.hashSync(password, saltRounds);
+    var hashedPassword = await bcrypt.hashSync(user_password, saltRounds);
 
-    if (!name) {
+    if (!user_name) {
         res.send(`Please enter a name!<br>
         <a href='/signup'>Try again</a>`)
     }
-    else if (!email) {
+    else if (!user_email) {
         res.send(`Please enter an email!<br>
         <a href='/signup'>Try again</a>`)
     }
-    else if (!password) {
+    else if (!user_password) {
         res.send(`Please enter a password!<br>
         <a href='/signup'>Try again</a>`)
     }
@@ -124,7 +122,7 @@ app.post('/signupSubmit', async (req,res) => {
 
         // users.push({ name: name, email: email, password: hashedPassword });
         // console.log(users);
-        await userCollection.insertOne({ name: name, email: email, password: hashedPassword }, (err, result) => {
+        await userCollection.insertOne({ name: user_name, email: user_email, password: hashedPassword }, (err, result) => {
             if (err) {
                 console.log(err);
                 res.send("Error creating user");
@@ -133,8 +131,7 @@ app.post('/signupSubmit', async (req,res) => {
             console.log("inserted user")
         });
         req.session.authenticated = true;
-        req.session.name = name;
-        req.session.email = email;
+        req.session.username = user_name;
         req.session.cookie.maxAge = expireTime;
             
         
@@ -176,8 +173,7 @@ app.post('/loginSubmit', async (req,res) => {
     
     if (bcrypt.compareSync(user_password, result[0].password)) {
         req.session.authenticated = true;
-        req.session.name = user_name;
-        req.session.email = user_email;
+        req.session.username = user_name;
         req.session.cookie.maxAge = expireTime;
         res.redirect('/members');
     }
@@ -197,8 +193,7 @@ app.get('/members', (req,res) => {
         return
     }
     const randomInt = Math.floor(Math.random() * 3) + 1;
-    // const image = "/public/image" + randomInt + ".jpg";
-    var name = req.session.name;
+    var name = req.session.username;
     console.log(name)
     var html = `
     <h1>Hello ${name}!</h1>
