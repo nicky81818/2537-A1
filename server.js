@@ -38,7 +38,7 @@ var mongoStore = MongoStore.create({
 })
 
 app.listen(port, () => {
-console.log('Listening to ' + port)
+    console.log(`Listening to ${port}`)
 })
 
 app.use(session({ 
@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
         <button onclick="window.location.href='/login'">Login</button>`);
     }
     else {
-        res.send(`Hello ${req.session.username}!
+        res.send(`Hello ${req.session.name}!
         <br>
         <button onclick="window.location.href='/members'">Go to Members Area</button>
         <button onclick="window.location.href='/logout'">Logout</button>`);
@@ -102,7 +102,7 @@ app.post('/signupSubmit', async (req,res) => {
         return;
     }
 
-    var hashedPassword = await bcrypt.hashSync(user_password, saltRounds);
+    var hashedPassword = bcrypt.hashSync(user_password, saltRounds);
 
     if (!user_name) {
         res.send(`Please enter a name!<br>
@@ -118,8 +118,6 @@ app.post('/signupSubmit', async (req,res) => {
     }
     else {
 
-        // users.push({ name: name, email: email, password: hashedPassword });
-        // console.log(users);
         await userCollection.insertOne({ name: user_name, email: user_email, password: hashedPassword }, (err, result) => {
             if (err) {
                 console.log(err);
@@ -129,7 +127,7 @@ app.post('/signupSubmit', async (req,res) => {
             console.log("inserted user")
         });
         req.session.authenticated = true;
-        req.session.username = user_name;
+        req.session.name = user_name;
         req.session.cookie.maxAge = expireTime;
             
         
@@ -150,7 +148,6 @@ app.get('/login', (req,res) => {
 });
 
 app.post('/loginSubmit', async (req,res) => {
-    var user_name = req.body.name;
     var user_email = req.body.email;
     var user_password = req.body.password;
 
@@ -162,7 +159,7 @@ app.post('/loginSubmit', async (req,res) => {
 	   return;
 	}    
     
-    const result = await userCollection.find({email: user_email}).project({email: 1, password: 1, _id: 0}).toArray();
+    const result = await userCollection.find({email: user_email}).project({name: 1, email: 1, password: 1, _id: 0}).toArray();
 
     if (result.length == 0) {
         res.send("User and password not found. <br> <a href='/login'>Try again</a>");
@@ -171,7 +168,7 @@ app.post('/loginSubmit', async (req,res) => {
     
     if (bcrypt.compareSync(user_password, result[0].password)) {
         req.session.authenticated = true;
-        req.session.username = user_name;
+        req.session.name = result[0].name;
         req.session.cookie.maxAge = expireTime;
         res.redirect('/members');
     }
@@ -191,10 +188,10 @@ app.get('/members', (req,res) => {
         return
     }
     const randomInt = Math.floor(Math.random() * 3) + 1;
-    var name = req.session.username;
-    console.log(name)
+    // var name = req.session.name;
+    // console.log(name)
     var html = `
-    <h1>Hello ${name}!</h1>
+    <h1>Hello ${req.session.name}!</h1>
     <img src="view${randomInt}.jpg" alt="A wonderful view." width=50%>
     <br>
     <button onclick="window.location.href='/logout'">Logout</button>
