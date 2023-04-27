@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.port || 3000;
 console.log(port)
 
-const expireTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const expireTime = 60 * 60 * 1000; // 1 hour in milliseconds
 
 const Joi = require("joi");
 
