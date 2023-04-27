@@ -8,10 +8,8 @@ const saltRounds = 10;
 const app = express();
 const port = process.env.port || 3000;
 console.log(port)
-// var numPageHits = 0;
+
 const expireTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-// var users = [];
-// const node_session_secret = '9b806987-6671-4b46-ab4d-66bf0a8a41d6'
 
 const Joi = require("joi");
 
@@ -45,7 +43,7 @@ console.log('Listening to ' + port)
 
 app.use(session({ 
     secret: node_session_secret,
-	store: mongoStore, //default is memory store 
+	store: mongoStore, 
 	saveUninitialized: false, 
 	resave: true
 }
